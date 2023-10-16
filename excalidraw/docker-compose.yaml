@@ -1,0 +1,23 @@
+version: '3'
+
+name: excalidraw_homelab
+
+networks:
+  excalidraw_net:
+    external: true
+    name: ${MAIN_NETWORK}
+
+services:
+  excalidraw:
+    restart: always
+    image: excalidraw/excalidraw:latest
+    networks:
+      - excalidraw_net
+    labels:
+      - "traefik.enable=true"
+      ## HTTP: example of labels for the case if you are going to expose penpot to the
+      ## internet using only HTTP (without HTTPS) with traefik
+
+      - "traefik.http.routers.excalidraw-http.entrypoints=web"
+      - "traefik.http.routers.excalidraw-http.rule=Host(`${EXCALIDRAW_HOST}`)"
+      - "traefik.http.services.excalidraw-http.loadbalancer.server.port=80"

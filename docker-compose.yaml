@@ -1,0 +1,32 @@
+version: '3'
+
+networks:
+  homelab_net:
+    external: true
+    name: ${MAIN_NETWORK}
+
+name: homelab_main
+
+services:
+  traefik:
+    image: traefik:v2.9
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - homelab_net
+    command:
+      - "--api.insecure=true"
+      - "--entryPoints.web.address=:80"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      # - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      # - "--certificatesresolvers.letsencrypt.acme.email=${EMAIL}"
+      # - "--certificatesresolvers.letsencrypt.acme.storage=/traefik/acme.json"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    ports:
+      - "${MAIN_PORT}:80"
+      - "${DASHBOARD_PORT}:8080"
+      # - "443:443"
