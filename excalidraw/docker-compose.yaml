@@ -14,10 +14,14 @@ services:
     networks:
       - excalidraw_net
     labels:
+      # ------------------ TRAEFIK LABELS -----------------------
       - "traefik.enable=true"
-      ## HTTP: example of labels for the case if you are going to expose penpot to the
-      ## internet using only HTTP (without HTTPS) with traefik
-
       - "traefik.http.routers.excalidraw-http.entrypoints=web"
       - "traefik.http.routers.excalidraw-http.rule=Host(`${EXCALIDRAW_HOST}`)"
       - "traefik.http.services.excalidraw-http.loadbalancer.server.port=80"
+
+      # ------------------ HOMEPAGE LABELS -----------------------
+      - homepage.group=Design
+      - homepage.name=Excalidraw
+      - homepage.href=http://${EXCALIDRAW_HOST}:${MAIN_PORT}
+      - homepage.icon=excalidraw.png

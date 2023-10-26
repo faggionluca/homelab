@@ -69,13 +69,17 @@ services:
       - ./consume:/usr/src/paperless/consume
     env_file: .env
     labels:
+      # -------------- TRAEFIK LABELS ---------
       - "traefik.enable=true"
-      ## HTTP: example of labels for the case if you are going to expose penpot to the
-      ## internet using only HTTP (without HTTPS) with traefik
-
       - "traefik.http.routers.paperless-http.entrypoints=web"
       - "traefik.http.routers.paperless-http.rule=Host(`${PAPERLESS_HOST}`)"
       - "traefik.http.services.paperless-http.loadbalancer.server.port=8000"
+      # -------------- HOMEPAGE LABELS ---------
+      - homepage.group=Office
+      - homepage.name=Paperless
+      - homepage.href=http://${PAPERLESS_HOST}:${MAIN_PORT}
+      - homepage.icon=paperless
+
     environment:
       PAPERLESS_REDIS: redis://broker:6379
       PAPERLESS_DBHOST: db

@@ -5,6 +5,10 @@ networks:
     external: true
     name: ${MAIN_NETWORK}
 
+volumes:
+  homepage-data:
+
+
 name: homelab_main
 
 services:
@@ -30,3 +34,20 @@ services:
       - "${MAIN_PORT}:80"
       - "${DASHBOARD_PORT}:8080"
       # - "443:443"
+
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    restart: always
+    environment:
+      - LOG_LEVEL=debug
+    labels:
+      # -------------- TRAEFIK LABELS ---------
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage-http.entrypoints=web"
+      - "traefik.http.routers.homepage-http.rule=Host(`localhost`)"
+      - "traefik.http.services.homepage-http.loadbalancer.server.port=3000"
+    volumes:
+      - homepage-data:/app/config # Make sure your local config directory exists
+      - /var/run/docker.sock:/var/run/docker.sock # (optional) For docker integrations
+    networks:
+      - homelab_net

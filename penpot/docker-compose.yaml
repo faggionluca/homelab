@@ -32,6 +32,7 @@ services:
 
     labels:
       - "traefik.enable=true"
+
       ## HTTP: example of labels for the case if you are going to expose penpot to the
       ## internet using only HTTP (without HTTPS) with traefik
 
@@ -55,6 +56,12 @@ services:
       ## Configuration envronment variables for frontend the container. In this case this
       ## container only needs the `PENPOT_FLAGS`. This environment variable is shared with
       ## other services but not all flags are relevant to all services.
+
+      # -------------- HOMEPAGE LABELS ---------
+      - homepage.group=Design
+      - homepage.name=Penpot
+      - homepage.href=http://${PENPOT_HOST}:${MAIN_PORT}
+      - homepage.icon=https://user-images.githubusercontent.com/1045247/136333292-243e189d-f1ab-4389-a81c-bd931135ef2e.png
 
     environment:
       ## Relevant flags for frontend:
