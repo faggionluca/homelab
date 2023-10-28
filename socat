@@ -1,0 +1,2 @@
+ssh -L 8888:localhost:8888 lucaf@faggion.casa
+socat TCP-LISTEN:8888,reuseaddr,fork UNIX-CONNECT:/var/run/docker.sock

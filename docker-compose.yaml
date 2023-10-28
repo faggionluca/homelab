@@ -30,6 +30,16 @@ services:
       # - "--certificatesresolvers.letsencrypt.acme.storage=/traefik/acme.json"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+    labels:
+      - homepage.group=Administation
+      - homepage.name=Traefik Dashboard
+      - homepage.href=http://${DASHBOARD_HOST}
+      - homepage.icon=traefik
+
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard-http.entrypoints=web"
+      - "traefik.http.routers.dashboard-http.rule=Host(`${DASHBOARD_HOST}`)"
+      - "traefik.http.services.dashboard-http.loadbalancer.server.port=8080"
     ports:
       - "${MAIN_PORT}:80"
       - "${DASHBOARD_PORT}:8080"
@@ -49,7 +59,7 @@ services:
       # -------------- TRAEFIK LABELS ---------
       - "traefik.enable=true"
       - "traefik.http.routers.homepage-http.entrypoints=web"
-      - "traefik.http.routers.homepage-http.rule=Host(`localhost`)"
+      - "traefik.http.routers.homepage-http.rule=Host(`${HOMEPAGE_HOST}`)"
       - "traefik.http.services.homepage-http.loadbalancer.server.port=3000"
     volumes:
       - homepage-data:/app/config # Make sure your local config directory exists
