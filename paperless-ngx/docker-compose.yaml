@@ -65,20 +65,25 @@ services:
     volumes:
       - data:/usr/src/paperless/data
       - media:/usr/src/paperless/media
+      # Controllare come migliorare questi 2 campi
       - ./export:/usr/src/paperless/export
       - ./consume:/usr/src/paperless/consume
-    env_file: .env
+    env_file: .env.paperless
     labels:
       # -------------- TRAEFIK LABELS ---------
       - "traefik.enable=true"
-      - "traefik.http.routers.paperless-http.entrypoints=web"
+      - "traefik.http.routers.paperless-http.entrypoints=websecure"
       - "traefik.http.routers.paperless-http.rule=Host(`${PAPERLESS_HOST}`)"
-      - "traefik.http.services.paperless-http.loadbalancer.server.port=8000"
+      - "traefik.http.services.paperless-service.loadbalancer.server.port=8000"
       # -------------- HOMEPAGE LABELS ---------
       - homepage.group=Office
       - homepage.name=Paperless
-      - homepage.href=http://${PAPERLESS_HOST}:${MAIN_PORT}
+      - homepage.href=https://${PAPERLESS_HOST}
       - homepage.icon=paperless
+      - homepage.widget.type=paperlessngx
+      - homepage.widget.url=https://${PAPERLESS_HOST}
+      - homepage.widget.username=${PAPERLESS_USER}
+      - homepage.widget.password=${PAPERLESS_PASS}
 
     environment:
       PAPERLESS_REDIS: redis://broker:6379

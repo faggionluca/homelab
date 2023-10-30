@@ -1,0 +1,71 @@
+---
+
+name: unifi-homelab
+
+networks:
+  unifi-net:
+    external: true
+    name: ${MAIN_NETWORK}
+
+version: "2.1"
+services:
+  unifi-network-application:
+    image: lscr.io/linuxserver/unifi-network-application:latest
+    container_name: unifi-network-application
+    depends_on:
+      - unifi-db
+    env_file:
+      - .env.unifi
+    volumes:
+      - config:/config
+    ports:
+      # - 8443:8443
+      - 3478:3478/udp
+      - 10001:10001/udp
+      - 8080:8080
+      # - 1900:1900/udp #optional
+      # - 8843:8843 #optional
+      # - 8880:8880 #optional
+      # - 6789:6789 #optional
+      # - 5514:5514/udp #optional
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.unifi-http.entrypoints=websecure"
+      - "traefik.http.routers.unifi-http.rule=Host(`${UNIFI_HOST}`)"
+      - "traefik.http.services.unifi-service.loadbalancer.server.port=8443"
+      - "traefik.http.services.unifi-service.loadbalancer.server.scheme=https"
+      - "traefik.http.routers.unifi-http.service=unifi-service"
+
+      # - "traefik.http.routers.unifi-inform-http.entrypoints=websecure"
+      # - "traefik.http.routers.unifi-inform-http.rule=Host(`${UNIFI_CONTROLLER_HOST}`)"
+      # - "traefik.http.services.unifi-inform-service.loadbalancer.server.port=8080"
+      # - "traefik.http.routers.unifi-inform-http.service=unifi-inform-service"
+      # -------------- HOMEPAGE LABELS ---------
+      - homepage.group=Administration
+      - homepage.name=Unifi Controller
+      - homepage.href=https://${UNIFI_HOST}
+      - homepage.icon=unifi
+      - homepage.widget.type=unifi
+      - homepage.widget.url=https://${UNIFI_HOST}
+      - homepage.widget.username=${UNIFI_CONTROLLER_USER}
+      - homepage.widget.password=${UNIFI_CONTROLLER_PASS}
+      - homepage.widget.site=${UNIFI_CONTROLLER_SITE}
+    # network_mode: host
+    networks:
+      - unifi-net
+
+  unifi-db:
+    image: docker.io/mongo:4.4.25-focal
+    container_name: unifi-db
+    volumes:
+      - mongo-data:/data/db
+      - init:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - unifi-net
+
+volumes:
+  mongo-data:
+  config:
+  init:
