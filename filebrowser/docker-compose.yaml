@@ -1,0 +1,45 @@
+---
+version: '3'
+
+networks:
+  main_net:
+    external: true
+    name: ${MAIN_NETWORK}
+
+volumes:
+  config:
+  database:
+  library:
+  qbittorrent_downloads:
+    external: true
+
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:s6
+    container_name: filebrowser
+    networks:
+      - main_net
+    restart: unless-stopped
+    volumes:
+      - config:/config
+      - database:/database
+      - library:/srv
+      - qbittorrent_downloads:/srv/downloads
+    labels:
+      # ----------- HOMEPAGE LABELS ----------
+      - homepage.group=${HOMEPAGE_GROUP_FILES}
+      - homepage.name=Filebrowser
+      - homepage.href=https://${FILEBROWSER_HOST}
+      - homepage.icon=filebrowser
+
+      # ----------- TRAEFIK LABELS ----------
+      - "traefik.enable=true"
+      - "traefik.http.routers.filebrowser-http.entrypoints=websecure"
+      - "traefik.http.routers.filebrowser-http.rule=Host(`${FILEBROWSER_HOST}`)"
+      - "traefik.http.routers.filebrowser-http.tls=true"
+      - "traefik.http.services.filebrowser-service.loadbalancer.server.port=80"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:80/health" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3

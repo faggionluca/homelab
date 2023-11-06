@@ -1,0 +1,1 @@
+docker cp ./config/settings.json filebrowser:/config/settings.json
