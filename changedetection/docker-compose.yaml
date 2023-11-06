@@ -1,0 +1,93 @@
+version: '3.2'
+
+networks:
+  main_net:
+    external: true
+    name: ${MAIN_NETWORK}
+  local:
+
+
+volumes:
+  data:
+
+
+services:
+  changedetection:
+    image: ghcr.io/dgtlmoon/changedetection.io
+    container_name: changedetection
+    # hostname: changedetection
+    env_file: .env.changedetection
+    volumes:
+      - data:/datastore
+    # Configurable proxy list support, see https://github.com/dgtlmoon/changedetection.io/wiki/Proxy-configuration#proxy-list-support
+    #        - ./proxies.json:/datastore/proxies.json
+
+    # Comment out ports: when using behind a reverse proxy , enable networks: etc.
+    # ports:
+    #   - 5000:5000
+    restart: unless-stopped
+    networks:
+      - main_net
+      - local
+    labels:
+      # -------------- TRAEFIK LABELS ---------
+      - "traefik.enable=true"
+      - "traefik.http.routers.changedetection-http.entrypoints=websecure"
+      - "traefik.http.routers.changedetection-http.rule=Host(`${CHANGEDETECTION_HOST}`)"
+      - "traefik.http.services.changedetection-service.loadbalancer.server.port=${PORT}"
+      - "traefik.http.routers.changedetection-http.tls=true"
+      - "traefik.docker.network=${MAIN_NETWORK}"
+      # -------------- HOMEPAGE LABELS ---------
+      - homepage.group=${HOMEPAGE_GROUP_TOOLS}
+      - homepage.name=Changedetection
+      - homepage.href=https://${CHANGEDETECTION_HOST}
+      - homepage.icon=changedetection-io
+      # -- Widget
+      - homepage.widget.type=changedetectionio
+      - homepage.widget.url=https://${CHANGEDETECTION_HOST}
+      - homepage.widget.key=${CHANGEDETECTION_APIKEY}
+    # Used for fetching pages via WebDriver+Chrome where you need Javascript support.
+    # Now working on arm64 (needs testing on rPi - tested on Oracle ARM instance)
+    # replace image with seleniarm/standalone-chromium:4.0.0-20211213
+
+    # If WEBDRIVER or PLAYWRIGHT are enabled, changedetection container depends on that
+    # and must wait before starting (substitute "browser-chrome" with "playwright-chrome" if last one is used)
+    # depends_on:
+    #   playwright-schrome:
+    #     condition: service_started
+    #    browser-chrome:
+    #        hostname: browser-chrome
+    #        image: selenium/standalone-chrome:4
+    #        environment:
+    #            - VNC_NO_PASSWORD=1
+    #            - SCREEN_WIDTH=1920
+    #            - SCREEN_HEIGHT=1080
+    #            - SCREEN_DEPTH=24
+    #        volumes:
+    #            # Workaround to avoid the browser crashing inside a docker container
+    #            # See https://github.com/SeleniumHQ/docker-selenium#quick-start
+    #            - /dev/shm:/dev/shm
+    #        restart: unless-stopped
+
+    # Used for fetching pages via Playwright+Chrome where you need Javascript support.
+    # Note: Playwright/browserless not supported on ARM type devices (rPi etc)
+    # playwright-chrome:
+    #   hostname: playwright-chrome
+    #   image: browserless/chrome
+    #   restart: unless-stopped
+    #   networks:
+    #     - local
+    #   environment:
+    #     - SCREEN_WIDTH=1920
+    #     - SCREEN_HEIGHT=1024
+    #     - SCREEN_DEPTH=16
+    #     - ENABLE_DEBUGGER=false
+    #     - PREBOOT_CHROME=true
+    #     - CONNECTION_TIMEOUT=300000
+    #     - MAX_CONCURRENT_SESSIONS=10
+    #     - CHROME_REFRESH_TIME=600000
+    #     - DEFAULT_BLOCK_ADS=true
+    #     - DEFAULT_STEALTH=true
+
+    #     # Ignore HTTPS errors, like for self-signed certs
+    #     - DEFAULT_IGNORE_HTTPS_ERRORS=true
