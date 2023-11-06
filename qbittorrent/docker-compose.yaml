@@ -1,0 +1,47 @@
+---
+version: "2.1"
+
+volumes:
+  config:
+  downloads:
+  ui:
+
+
+networks:
+  main_net:
+    external: true
+    name: ${MAIN_NETWORK}
+
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    env_file: .env.bittorrent
+    volumes:
+      - config:/config
+      - downloads:/downloads
+      - ui:/ui
+    ports:
+      # - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+    networks:
+      - main_net
+    labels:
+      # -------------- TRAEFIK LABELS ---------
+      - "traefik.enable=true"
+      - "traefik.http.routers.qbittorrent-http.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent-http.rule=Host(`${QBITTORRENT_HOST}`)"
+      - "traefik.http.services.qbittorrent-service.loadbalancer.server.port=${WEBUI_PORT}"
+      - "traefik.http.routers.qbittorrent-http.tls=true"
+      # -------------- HOMEPAGE LABELS ---------
+      - homepage.group=${HOMEPAGE_GROUP_FILES}
+      - homepage.name=qBittorrent
+      - homepage.href=https://${QBITTORRENT_HOST}
+      - homepage.icon=qbittorrent
+      # - Widget
+      - homepage.widget.type=qbittorrent
+      - homepage.widget.url=https://${QBITTORRENT_HOST}
+      - homepage.widget.username=${QBITTORRENT_WEBUI_USER}
+      - homepage.widget.password=${QBITTORRENT_WEBUI_PASS}

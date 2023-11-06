@@ -33,6 +33,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.unifi-http.entrypoints=websecure"
       - "traefik.http.routers.unifi-http.rule=Host(`${UNIFI_HOST}`)"
+      - "traefik.http.routers.unifi-http.tls=true"
       - "traefik.http.services.unifi-service.loadbalancer.server.port=8443"
       - "traefik.http.services.unifi-service.loadbalancer.server.scheme=https"
       - "traefik.http.routers.unifi-http.service=unifi-service"
@@ -42,7 +43,7 @@ services:
       # - "traefik.http.services.unifi-inform-service.loadbalancer.server.port=8080"
       # - "traefik.http.routers.unifi-inform-http.service=unifi-inform-service"
       # -------------- HOMEPAGE LABELS ---------
-      - homepage.group=Administration
+      - homepage.group=${HOMEPAGE_GROUP_ADMINISTRATION}
       - homepage.name=Unifi Controller
       - homepage.href=https://${UNIFI_HOST}
       - homepage.icon=unifi
