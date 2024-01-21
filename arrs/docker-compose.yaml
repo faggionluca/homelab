@@ -1,0 +1,117 @@
+---
+volumes:
+  config:
+  p_config:
+  r_config:
+  data_plex:
+    external: true
+    name: plex_media_root
+  data_dl:
+    external: true
+    name: qbittorrent_downloads
+
+networks:
+  main_net:
+    external: true
+    name: ${MAIN_NETWORK}
+
+services:
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    networks:
+      - main_net
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    labels:
+      # -------------- TRAEFIK LABELS ---------
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr-http.entrypoints=websecure"
+      - "traefik.http.routers.sonarr-http.rule=Host(`${SONARR_HOST}`)"
+      - "traefik.http.services.sonarr-service.loadbalancer.server.port=8989"
+      - "traefik.http.routers.sonarr-http.tls=true"
+      # -------------- HOMEPAGE LABELS ---------
+      - homepage.group=${HOMEPAGE_GROUP_TOOLS}
+      - homepage.name=sonarr
+      - homepage.href=https://${SONARR_HOST}
+      - homepage.icon=sonarr
+      # - Widget
+      - homepage.widget.type=sonarr
+      - homepage.widget.url=https://${SONARR_HOST}
+      - homepage.widget.key=${SONARR_APIKEY}
+      - homepage.widget.enableQueue=true
+    volumes:
+      - config:/config
+      - data_dl:/downloads #optional
+      - data_plex:/plex #optional 
+
+    # ports:
+    #   - 8989:8989
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    networks:
+      - main_net
+    volumes:
+      - p_config:/config
+    labels:
+      # -------------- TRAEFIK LABELS ---------
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr-http.entrypoints=web,websecure"
+      - "traefik.http.routers.prowlarr-http.rule=Host(`${PROWLARR_HOST}`)"
+      - "traefik.http.services.prowlarr-service.loadbalancer.server.port=9696"
+      - "traefik.http.routers.prowlarr-http.tls=true"
+      # -------------- HOMEPAGE LABELS ---------
+      - homepage.group=${HOMEPAGE_GROUP_TOOLS}
+      - homepage.name=prowlarr
+      - homepage.href=http://${PROWLARR_HOST}
+      - homepage.icon=prowlarr
+      # - Widget
+      - homepage.widget.type=prowlarr
+      - homepage.widget.url=https://${PROWLARR_HOST}
+      - homepage.widget.key=${PROWLARR_APIKEY}
+    # ports:
+    #   - 9690:9696
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    networks:
+      - main_net
+    volumes:
+      - r_config:/config
+      - data_dl:/downloads #optional
+      - data_plex:/plex #optional
+    labels:
+      # -------------- TRAEFIK LABELS ---------
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr-http.entrypoints=web,websecure"
+      - "traefik.http.routers.radarr-http.rule=Host(`${RADARR_HOST}`)"
+      - "traefik.http.services.radarr-service.loadbalancer.server.port=7878"
+      - "traefik.http.routers.radarr-http.tls=true"
+      # -------------- HOMEPAGE LABELS ---------
+      - homepage.group=${HOMEPAGE_GROUP_TOOLS}
+      - homepage.name=radarr
+      - homepage.href=http://${RADARR_HOST}
+      - homepage.icon=radarr
+      # - Widget
+      - homepage.widget.type=radarr
+      - homepage.widget.url=https://${RADARR_HOST}
+      - homepage.widget.key=${RADARR_APIKEY}
+      - homepage.widget.enableQueue=true
+    # ports:
+    #   - 7878:7878
+    restart: unless-stopped

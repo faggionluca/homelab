@@ -22,7 +22,7 @@ services:
       - downloads:/downloads
       - ui:/ui
     ports:
-      # - 8080:8080
+      # - ${EXTERNAL_WEBUI_PORT}:${WEBUI_PORT}
       - 6881:6881
       - 6881:6881/udp
     restart: unless-stopped
