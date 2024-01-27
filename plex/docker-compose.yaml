@@ -1,0 +1,57 @@
+---
+networks:
+  main_net:
+    external: true
+    name: ${MAIN_NETWORK}
+
+volumes:
+  config:
+  data_plex:
+    external: true
+    name: plex_media_root
+
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    networks:
+      - main_net
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - VERSION=docker
+      # - PLEX_CLAIM= #optional
+    volumes:
+      - config:/config
+      - data_plex:/media
+    ports:
+      - 32400:32400 #this is to use connect_as_local.sh -> then open browser at 32400
+      - 1900:1900/udp
+      # - 5353:5353/udp
+      - 8324:8324
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+      - 32469:32469
+    labels:
+      # -------------- TRAEFIK LABELS ---------
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex-http.entrypoints=websecure"
+      - "traefik.http.routers.plex-http.rule=Host(`${PLEX_HOST}`)"
+      - "traefik.http.services.plex-service.loadbalancer.server.port=32400"
+      - "traefik.http.routers.plex-http.tls=true"
+      # -------------- HOMEPAGE LABELS ---------
+      - homepage.group=${HOMEPAGE_GROUP_TOOLS}
+      - homepage.name=plex
+      - homepage.href=https://${PLEX_HOST}
+      - homepage.icon=plex
+      # - Widget
+      - homepage.widget.type=plex
+      - homepage.widget.url=https://${PLEX_HOST}
+      - homepage.widget.key=${PLEX_APIKEY}
+      - homepage.widget.enableQueue=true
+    devices:
+      - /dev/dri:/dev/dri
+    restart: unless-stopped
