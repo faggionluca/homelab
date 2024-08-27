@@ -1,0 +1,131 @@
+# Example Docker Compose config file for PhotoPrism (Linux / AMD64)
+#
+# Note:
+# - Running PhotoPrism on a server with less than 4 GB of swap space or setting a memory/swap limit can cause unexpected
+#   restarts ("crashes"), for example, when the indexer temporarily needs more memory to process large files.
+# - If you install PhotoPrism on a public server outside your home network, please always run it behind a secure
+#   HTTPS reverse proxy such as Traefik or Caddy. Your files and passwords will otherwise be transmitted
+#   in clear text and can be intercepted by anyone, including your provider, hackers, and governments:
+#   https://docs.photoprism.app/getting-started/proxies/traefik/
+#
+# Setup Guides:
+# - https://docs.photoprism.app/getting-started/docker-compose/
+# - https://docs.photoprism.app/getting-started/raspberry-pi/
+# - https://www.photoprism.app/kb/activation
+#
+# Troubleshooting Checklists:
+# - https://docs.photoprism.app/getting-started/troubleshooting/
+# - https://docs.photoprism.app/getting-started/troubleshooting/docker/
+# - https://docs.photoprism.app/getting-started/troubleshooting/mariadb/
+#
+# CLI Commands:
+# - https://docs.photoprism.app/getting-started/docker-compose/#command-line-interface
+#
+# All commands may have to be prefixed with "sudo" when not running as root.
+# This will point the home directory shortcut ~ to /root in volume mounts.
+
+services:
+  photoprism:
+    ## Use photoprism/photoprism:preview for testing preview builds:
+    image: photoprism/photoprism:latest
+    ## Don't enable automatic restarts until PhotoPrism has been properly configured and tested!
+    ## If the service gets stuck in a restart loop, this points to a memory, filesystem, network, or database issue:
+    ## https://docs.photoprism.app/getting-started/troubleshooting/#fatal-server-errors
+    # restart: unless-stopped
+    stop_grace_period: 10s
+    depends_on:
+      - mariadb
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    ## Server port mapping in the format "Host:Container". To use a different port, change the host port on
+    ## the left-hand side and keep the container port, e.g. "80:2342" (for HTTP) or "443:2342 (for HTTPS):
+    # ports:
+    # - "2342:2342"
+    ## Before you start the service, please check the following config options (and change them as needed):
+    ## https://docs.photoprism.app/getting-started/config-options/
+    env_file: .env
+    ## Start as non-root user before initialization (supported: 0, 33, 50-99, 500-600, and 900-1200):
+    # user: "1000:1000"
+    ## Share hardware devices with FFmpeg and TensorFlow (optional):
+    # devices:
+    #  - "/dev/dri:/dev/dri"                         # Intel QSV
+    #  - "/dev/nvidia0:/dev/nvidia0"                 # Nvidia CUDA
+    #  - "/dev/nvidiactl:/dev/nvidiactl"
+    #  - "/dev/nvidia-modeset:/dev/nvidia-modeset"
+    #  - "/dev/nvidia-nvswitchctl:/dev/nvidia-nvswitchctl"
+    #  - "/dev/nvidia-uvm:/dev/nvidia-uvm"
+    #  - "/dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools"
+    #  - "/dev/video11:/dev/video11"                 # Video4Linux Video Encode Device (h264_v4l2m2m)
+    working_dir: "/photoprism" # do not change or remove
+    ## Storage Folders: "~" is a shortcut for your home directory, "." for the current directory
+    volumes:
+      # "/host/folder:/photoprism/folder"                # Example
+      - "photoprism_originals:/photoprism/originals" # Original media files (DO NOT REMOVE)
+      # - "/example/family:/photoprism/originals/family" # *Additional* media folders can be mounted like this
+      # - "~/Import:/photoprism/import"                  # *Optional* base folder from which files can be imported to originals
+      - "photoprism_storage:/photoprism/storage" # *Writable* storage folder for cache, database, and sidecar files (DO NOT REMOVE)
+    networks:
+      - photoprism_net
+      - photoprism-private
+
+    labels:
+      # ----------- HOMEPAGE LABELS ----------
+      - homepage.group=${HOMEPAGE_GROUP_OFFICE}
+      - homepage.name=Photo Prism
+      - homepage.href=https://${PHOTOPRISM_HOST}
+      - homepage.icon=photoprism
+
+      # ----------- TRAEFIK LABELS ----------
+      - "traefik.enable=true"
+      - "traefik.http.routers.photoprism-http.entrypoints=websecure"
+      - "traefik.http.routers.photoprism-http.rule=Host(`${PHOTOPRISM_HOST}`)"
+      - "traefik.http.routers.photoprism-http.tls=true"
+      - "traefik.http.services.photoprism-service.loadbalancer.server.port=2342"
+
+  ## MariaDB Database Server (recommended)
+  ## see https://docs.photoprism.app/getting-started/faq/#should-i-use-sqlite-mariadb-or-mysql
+  mariadb:
+    image: mariadb:11
+    ## If MariaDB gets stuck in a restart loop, this points to a memory or filesystem issue:
+    ## https://docs.photoprism.app/getting-started/troubleshooting/#fatal-server-errors
+    restart: unless-stopped
+    stop_grace_period: 5s
+    security_opt:
+      # see https://github.com/MariaDB/mariadb-docker/issues/434#issuecomment-1136151239
+      - seccomp:unconfined
+      - apparmor:unconfined
+    command: --innodb-buffer-pool-size=512M --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=512 --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120
+    ## Never store database files on an unreliable device such as a USB flash drive, an SD card, or a shared network folder:
+    volumes:
+      - "photoprism_db:/var/lib/mysql" # DO NOT REMOVE
+    env_file: .env
+    networks:
+      - photoprism-private
+
+  ## Watchtower upgrades services automatically (optional)
+  ## see https://docs.photoprism.app/getting-started/updates/#watchtower
+  ## activate via "COMPOSE_PROFILES=update docker compose up -d"
+  watchtower:
+    restart: unless-stopped
+    image: containrrr/watchtower
+    profiles: [ "update" ]
+    environment:
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_POLL_INTERVAL: 7200 # checks for updates every two hours
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      # - "~/.docker/config.json:/config.json" # optional, for authentication if you have a Docker Hub account
+
+
+volumes:
+  photoprism_originals:
+  photoprism_db:
+  photoprism_storage:
+
+
+networks:
+  photoprism-private:
+  photoprism_net:
+    external: true
+    name: ${MAIN_NETWORK}
