@@ -81,6 +81,7 @@ services:
       - "traefik.http.routers.photoprism-http.entrypoints=websecure"
       - "traefik.http.routers.photoprism-http.rule=Host(`${PHOTOPRISM_HOST}`)"
       - "traefik.http.routers.photoprism-http.tls=true"
+      - "traefik.http.routers.photoprism-http.middlewares=error-pages-middleware"
       - "traefik.http.services.photoprism-service.loadbalancer.server.port=2342"
 
   ## MariaDB Database Server (recommended)

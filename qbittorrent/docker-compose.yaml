@@ -35,6 +35,7 @@ services:
       - "traefik.http.routers.qbittorrent-http.rule=Host(`${QBITTORRENT_HOST}`)"
       - "traefik.http.services.qbittorrent-service.loadbalancer.server.port=${WEBUI_PORT}"
       - "traefik.http.routers.qbittorrent-http.tls=true"
+      - "traefik.http.routers.qbittorrent-http.middlewares=error-pages-middleware"
       # -------------- HOMEPAGE LABELS ---------
       - homepage.group=${HOMEPAGE_GROUP_FILES}
       - homepage.name=qBittorrent

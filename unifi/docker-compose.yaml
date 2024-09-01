@@ -37,6 +37,7 @@ services:
       - "traefik.http.services.unifi-service.loadbalancer.server.port=8443"
       - "traefik.http.services.unifi-service.loadbalancer.server.scheme=https"
       - "traefik.http.routers.unifi-http.service=unifi-service"
+      - "traefik.http.routers.unifi-http.middlewares=error-pages-middleware"
 
       # - "traefik.http.routers.unifi-inform-http.entrypoints=websecure"
       # - "traefik.http.routers.unifi-inform-http.rule=Host(`${UNIFI_CONTROLLER_HOST}`)"

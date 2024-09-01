@@ -1,5 +1,3 @@
-version: '3'
-
 networks:
   homelab_net:
     external: true
@@ -14,17 +12,18 @@ name: homelab_main
 
 services:
   traefik:
-    image: traefik:v2.9
+    image: docker.io/library/traefik:v3.1
     restart: always
     container_name: traefik
-    env_file:
-      - .env
+    # env_file:
+    #   - .env
     networks:
       - homelab_net
     command:
       - "--api.insecure=true"
       - "--log.level=DEBUG"
       - "--accesslog=true"
+      # - "--api.dashboard=true" # activate dashboard
       - "--entryPoints.web.address=:80"
       - "--entryPoints.websecure.address=:443"
       - "--entrypoints.websecure.http.tls=true"
@@ -44,18 +43,42 @@ services:
       - homepage.icon=traefik
       - homepage.widget.type=traefik
       - homepage.widget.url=https://${DASHBOARD_HOST}
-
       # ----------- TRAEFIK LABELS ----------
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard-http.entrypoints=websecure"
       - "traefik.http.routers.dashboard-http.rule=Host(`${DASHBOARD_HOST}`)"
+      # - "traefik.http.routers.dashboard-http.rule=Host(`traefik.localtest.me`)"
       - "traefik.http.routers.dashboard-http.tls=true"
       - "traefik.http.services.dashboard-http.loadbalancer.server.port=8080"
+      # - "traefik.http.routers.dashboard-http.service=api@internal"
+      - "traefik.http.routers.dashboard-http.middlewares=error-pages-middleware"
+    depends_on:
+      error-pages: { condition: service_healthy }
     ports:
       - "${MAIN_PORT}:80"
       - "${TLS_PORT}:443"
       # - "${DASHBOARD_PORT}:8080"
 
+  error-pages:
+    image: ghcr.io/tarampampam/error-pages:3 # using the latest tag is highly discouraged
+    environment:
+      TEMPLATE_NAME: lost-in-space # set the error pages template
+    labels:
+      traefik.enable: true
+      # use as "fallback" for any NON-registered services (with priority below normal)
+      traefik.http.routers.error-pages-router.rule: HostRegexp(`.+`)
+      traefik.http.routers.error-pages-router.priority: 10
+      # should say that all of your services work on https
+      traefik.http.routers.error-pages-router.entrypoints: websecure
+      traefik.http.routers.error-pages-router.middlewares: error-pages-middleware
+      # "errors" middleware settings
+      traefik.http.middlewares.error-pages-middleware.errors.status: 400-599
+      traefik.http.middlewares.error-pages-middleware.errors.service: error-pages-service
+      traefik.http.middlewares.error-pages-middleware.errors.query: /{status}.html
+      # define service properties
+      traefik.http.services.error-pages-service.loadbalancer.server.port: 8080
+    networks:
+      - homelab_net
 
   homepage:
     # HOMEPAGE DASHBOARD
@@ -73,6 +96,7 @@ services:
       - "traefik.http.routers.homepage-http.rule=Host(`${HOMEPAGE_HOST}`)"
       - "traefik.http.services.homepage-http.loadbalancer.server.port=3000"
       - "traefik.http.routers.homepage-http.tls=true"
+      - "traefik.http.routers.homepage-http.middlewares=error-pages-middleware"
     volumes:
       - homepage-data:/app/config # Make sure your local config directory exists
       - /var/run/docker.sock:/var/run/docker.sock # (optional) For docker integrations

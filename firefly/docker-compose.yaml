@@ -36,6 +36,7 @@ services:
       - "traefik.http.routers.firefly-http.rule=Host(`${FIREFLY_HOST}`)"
       - "traefik.http.routers.firefly-http.tls=true"
       - "traefik.http.services.firefly-service.loadbalancer.server.port=8080"
+      - "traefik.http.routers.firefly-service-http.middlewares=error-pages-middleware"
   db:
     image: mariadb
     hostname: db
@@ -69,6 +70,7 @@ services:
       - "traefik.http.routers.firefly-importer-http.rule=Host(`${FIREFLY_IMPORTER_HOST}`)"
       - "traefik.http.routers.firefly-importer-http.tls=true"
       - "traefik.http.services.firefly-importer-service.loadbalancer.server.port=8080"
+      - "traefik.http.routers.firefly-importer-http.middlewares=error-pages-middleware"
     depends_on:
       - app
     env_file: .importer.env

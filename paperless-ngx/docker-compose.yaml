@@ -76,6 +76,7 @@ services:
       - "traefik.http.routers.paperless-http.rule=Host(`${PAPERLESS_HOST}`)"
       - "traefik.http.services.paperless-service.loadbalancer.server.port=8000"
       - "traefik.http.routers.paperless-http.tls=true"
+      - "traefik.http.routers.paperless-http.middlewares=error-pages-middleware"
       # -------------- HOMEPAGE LABELS ---------
       - homepage.group=${HOMEPAGE_GROUP_OFFICE}
       - homepage.name=Paperless

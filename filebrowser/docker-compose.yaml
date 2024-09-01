@@ -38,6 +38,7 @@ services:
       - "traefik.http.routers.filebrowser-http.rule=Host(`${FILEBROWSER_HOST}`)"
       - "traefik.http.routers.filebrowser-http.tls=true"
       - "traefik.http.services.filebrowser-service.loadbalancer.server.port=80"
+      - "traefik.http.routers.filebrowser-http.middlewares=error-pages-middleware"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:80/health" ]
       interval: 30s

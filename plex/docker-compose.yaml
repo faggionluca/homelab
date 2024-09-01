@@ -42,10 +42,11 @@ services:
       - "traefik.http.routers.plex-http.rule=Host(`${PLEX_HOST}`)"
       - "traefik.http.services.plex-service.loadbalancer.server.port=32400"
       - "traefik.http.routers.plex-http.tls=true"
+      - "traefik.http.routers.plex-http.middlewares=error-pages-middleware"
       # -------------- HOMEPAGE LABELS ---------
       - homepage.group=${HOMEPAGE_GROUP_TOOLS}
       - homepage.name=plex
-      - homepage.href=https://${PLEX_HOST}
+      - homepage.href=https://${PLEX_HOST}/web/index.html#!
       - homepage.icon=plex
       # - Widget
       - homepage.widget.type=plex

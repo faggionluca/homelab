@@ -32,6 +32,7 @@ services:
       - "traefik.http.routers.sonarr-http.rule=Host(`${SONARR_HOST}`)"
       - "traefik.http.services.sonarr-service.loadbalancer.server.port=8989"
       - "traefik.http.routers.sonarr-http.tls=true"
+      - "traefik.http.routers.sonarr-http.middlewares=error-pages-middleware"
       # -------------- HOMEPAGE LABELS ---------
       - homepage.group=${HOMEPAGE_GROUP_TOOLS}
       - homepage.name=sonarr
@@ -69,6 +70,7 @@ services:
       - "traefik.http.routers.prowlarr-http.rule=Host(`${PROWLARR_HOST}`)"
       - "traefik.http.services.prowlarr-service.loadbalancer.server.port=9696"
       - "traefik.http.routers.prowlarr-http.tls=true"
+      - "traefik.http.routers.prowlarr-http.middlewares=error-pages-middleware"
       # -------------- HOMEPAGE LABELS ---------
       - homepage.group=${HOMEPAGE_GROUP_TOOLS}
       - homepage.name=prowlarr
@@ -102,6 +104,7 @@ services:
       - "traefik.http.routers.radarr-http.rule=Host(`${RADARR_HOST}`)"
       - "traefik.http.services.radarr-service.loadbalancer.server.port=7878"
       - "traefik.http.routers.radarr-http.tls=true"
+      - "traefik.http.routers.radarr-http.middlewares=error-pages-middleware"
       # -------------- HOMEPAGE LABELS ---------
       - homepage.group=${HOMEPAGE_GROUP_TOOLS}
       - homepage.name=radarr
